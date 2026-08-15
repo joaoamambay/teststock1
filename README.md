@@ -60,7 +60,39 @@ browser (ou hospedar os 3 ficheiros num servidor estático).
 > implementação** (ou gerir implementações existentes) para as alterações
 > ficarem ativas no URL publicado.
 
-## 4. Regras de status (podem ser ajustadas em `computeStatus_` e `computeStatus`)
+## 4. Importação em massa (vários produtos de uma vez)
+
+Na view **Produtos**, o botão **"⇩ Importar CSV"** abre um modal onde pode:
+
+1. **Colar** várias linhas diretamente (uma por produto), ou
+2. **Carregar um ficheiro `.csv`** (o botão "Descarregar modelo CSV" gera um
+   ficheiro de exemplo já com o formato certo para preencher no Excel/Google
+   Sheets e depois voltar a carregar aqui).
+
+Formato de cada linha (separado por vírgulas):
+
+```
+Nome, Categoria, Local, Qtd Atual, Qtd Minima, Unidade
+```
+
+Exemplo:
+
+```
+Leite Meio Gordo 1L, Laticínios, Frigorífico, 4, 6, un
+Peito de Frango, Carnes, Arca, 0, 3, kg
+Arroz Agulha 1kg, Secos, Armário, 12, 4, un
+```
+
+Depois de colar/carregar, clique em **"Analisar"** para ver uma
+pré-visualização: linhas válidas ficam a verde, linhas com **Nome**,
+**Categoria** ou **Local** em falta ficam marcadas a vermelho e não são
+importadas. Só depois clique em **"Importar Produtos"**.
+
+No backend, isto chama a ação `bulkCreate` do `Code.gs`, que escreve todas
+as linhas na Sheet numa única operação — muito mais rápido do que criar os
+produtos um a um.
+
+## 5. Regras de status (podem ser ajustadas em `computeStatus_` e `computeStatus`)
 
 - 🟢 **Estoque Normal** — quantidade atual acima da mínima ideal.
 - 🟠 **Nível Crítico** — quantidade atual igual ou abaixo da mínima, mas
