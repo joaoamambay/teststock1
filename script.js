@@ -12,7 +12,7 @@
    Deve terminar em "/exec".
    -------------------------------------------------------------------------- */
 const CONFIG = {
-  API_URL: 'https://script.google.com/macros/s/AKfycbyfPhkp4QsWuFXMCHsL68LHqm7njsDcGA2zRFLOyp1Vi--cVnVuTl5UO9OwUMdHIAMH1w/exec'
+  API_URL: 'https://script.google.com/macros/s/AKfycbwA9cy7B3IKb7bt4Xa76MWY1_m7_w9jTgd5UIZLVzWk8LWJhT0RwwGk9SeUBLhAO2p_Sg/exec'
 };
 
 /* Estado local da aplicação (cache dos dados vindos da Sheet) */
