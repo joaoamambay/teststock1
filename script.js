@@ -233,15 +233,26 @@ function initNavigation() {
    7) MODAL DE PRODUTO (Criar / Editar / Eliminar)
    -------------------------------------------------------------------------- */
 
+/**
+ * Aplica-se a QUALQUER modal (produto, importação, etc.):
+ * fecha ao clicar no botão "✕" ou fora da caixa (no overlay).
+ */
+function initModalOverlays() {
+  document.querySelectorAll('[data-close-modal]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.closest('.modal-overlay').classList.remove('open');
+    });
+  });
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.classList.remove('open');
+    });
+  });
+}
+
 function initProductModal() {
   document.querySelectorAll('[data-open-modal="produto"]').forEach(btn => {
     btn.addEventListener('click', () => openProductModal(null));
-  });
-  document.querySelectorAll('[data-close-modal]').forEach(btn => {
-    btn.addEventListener('click', closeProductModal);
-  });
-  document.getElementById('modalProduto').addEventListener('click', (e) => {
-    if (e.target.id === 'modalProduto') closeProductModal();
   });
 
   document.getElementById('productForm').addEventListener('submit', onSubmitProduct);
@@ -381,6 +392,172 @@ async function onSubmitMovement(e) {
 }
 
 /* --------------------------------------------------------------------------
+   8.5) IMPORTAÇÃO EM MASSA (CSV)
+   -------------------------------------------------------------------------
+   Permite colar ou carregar várias linhas de produtos de uma só vez.
+   Formato esperado por linha: Nome, Categoria, Local, Qtd Atual, Qtd Minima, Unidade
+   O backend recebe o lote inteiro numa única chamada (ação "bulkCreate"),
+   o que é muito mais rápido do que enviar um POST por produto.
+   -------------------------------------------------------------------------- */
+
+let currentImportItems = [];
+
+function initImportModal() {
+  document.getElementById('btnOpenImport').addEventListener('click', openImportModal);
+  document.getElementById('importFile').addEventListener('change', onImportFileSelected);
+  document.getElementById('btnAnalyzeImport').addEventListener('click', onAnalyzeImport);
+  document.getElementById('btnConfirmImport').addEventListener('click', onConfirmImport);
+  document.getElementById('btnDownloadTemplate').addEventListener('click', downloadCsvTemplate);
+}
+
+function openImportModal() {
+  document.getElementById('importTextarea').value = '';
+  document.getElementById('importFile').value = '';
+  document.getElementById('importPreview').style.display = 'none';
+  document.getElementById('btnConfirmImport').disabled = true;
+  currentImportItems = [];
+  document.getElementById('modalImport').classList.add('open');
+}
+
+function onImportFileSelected(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    document.getElementById('importTextarea').value = evt.target.result;
+    onAnalyzeImport();
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+/**
+ * Converte o texto colado/carregado numa lista de objetos de produto.
+ * - Separador: vírgula.
+ * - Deteta e ignora automaticamente uma linha de cabeçalho (ex: "Nome, Categoria…").
+ * - Linhas sem Nome, Categoria ou Local, ou com quantidades não numéricas,
+ *   ficam marcadas como inválidas e não são importadas.
+ */
+function parseCsvText(text) {
+  let lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+
+  if (lines.length > 0 && /^nome\s*[,;]/i.test(lines[0])) {
+    lines = lines.slice(1); // remove cabeçalho, se existir
+  }
+
+  return lines.map((line, idx) => {
+    const parts = line.split(',').map(p => p.trim());
+    const [nome, categoria, local, qtdAtualRaw, qtdMinimaRaw, unidade] = parts;
+
+    const qtdAtual = qtdAtualRaw !== undefined && qtdAtualRaw !== '' ? Number(qtdAtualRaw) : 0;
+    const qtdMinima = qtdMinimaRaw !== undefined && qtdMinimaRaw !== '' ? Number(qtdMinimaRaw) : 1;
+
+    const item = {
+      linha: idx + 1,
+      nome: nome || '',
+      categoria: categoria || '',
+      local: local || '',
+      qtdAtual: isNaN(qtdAtual) ? 0 : qtdAtual,
+      qtdMinima: isNaN(qtdMinima) ? 1 : qtdMinima,
+      unidade: (unidade || 'un').trim()
+    };
+
+    item.valido = !!(item.nome && item.categoria && item.local && !isNaN(qtdAtual) && !isNaN(qtdMinima));
+    return item;
+  });
+}
+
+function onAnalyzeImport() {
+  const text = document.getElementById('importTextarea').value;
+  currentImportItems = parseCsvText(text);
+
+  if (currentImportItems.length === 0) {
+    showToast('Cole ou carregue pelo menos uma linha para analisar.', 'error');
+    return;
+  }
+  renderImportPreview(currentImportItems);
+}
+
+function renderImportPreview(items) {
+  const preview = document.getElementById('importPreview');
+  const body = document.getElementById('importPreviewBody');
+
+  const validCount = items.filter(i => i.valido).length;
+  const invalidCount = items.length - validCount;
+
+  document.getElementById('importValidCount').textContent = `${validCount} válido(s)`;
+
+  const invalidBadge = document.getElementById('importInvalidCount');
+  if (invalidCount > 0) {
+    invalidBadge.textContent = `${invalidCount} com erro`;
+    invalidBadge.style.display = 'inline-flex';
+  } else {
+    invalidBadge.style.display = 'none';
+  }
+
+  body.innerHTML = items.map(i => `
+    <tr class="${i.valido ? '' : 'row-invalid'}">
+      <td>${i.linha}</td>
+      <td>${escapeHtml(i.nome)}</td>
+      <td>${escapeHtml(i.categoria)}</td>
+      <td>${escapeHtml(i.local)}</td>
+      <td>${i.qtdAtual}</td>
+      <td>${i.qtdMinima}</td>
+      <td>${escapeHtml(i.unidade)}</td>
+      <td>${i.valido ? '✓ OK' : '✕ Nome, categoria ou local em falta'}</td>
+    </tr>
+  `).join('');
+
+  preview.style.display = 'block';
+  document.getElementById('btnConfirmImport').disabled = validCount === 0;
+}
+
+async function onConfirmImport() {
+  const validItems = currentImportItems.filter(i => i.valido);
+  if (validItems.length === 0) return;
+
+  const btn = document.getElementById('btnConfirmImport');
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'A importar…';
+
+  try {
+    const result = await apiPost('bulkCreate', { items: validItems });
+    const criados = (result && result.criados) || validItems.length;
+    showToast(`${criados} produto(s) importado(s) com sucesso.`, 'success');
+    document.getElementById('modalImport').classList.remove('open');
+    await loadProducts();
+  } catch (err) {
+    console.error(err);
+    showToast(err.message || 'Erro ao importar produtos.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }
+}
+
+/**
+ * Gera e descarrega um ficheiro .csv de exemplo com o formato correto,
+ * para o utilizador preencher no Excel/Google Sheets e depois colar aqui.
+ */
+function downloadCsvTemplate() {
+  const rows = [
+    'Nome,Categoria,Local,Qtd Atual,Qtd Minima,Unidade',
+    'Leite Meio Gordo 1L,Laticínios,Frigorífico,4,6,un',
+    'Peito de Frango,Carnes,Arca,0,3,kg',
+    'Arroz Agulha 1kg,Secos,Armário,12,4,un'
+  ];
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'modelo_importacao_produtos.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* --------------------------------------------------------------------------
    9) FILTROS E PESQUISA
    -------------------------------------------------------------------------- */
 
@@ -410,7 +587,9 @@ function showToast(message, type = '') {
 
 document.addEventListener('DOMContentLoaded', () => {
   initNavigation();
+  initModalOverlays();
   initProductModal();
+  initImportModal();
   initMovementForm();
   initFilters();
 
