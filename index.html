@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StockControl · Gestão de Estoque</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ===================== TOPBAR ===================== -->
+<header class="topbar">
+  <div class="topbar-left">
+    <div class="logo">
+      <span class="logo-mark">S</span>
+      <span class="logo-text">Stock<strong>Control</strong></span>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span id="lastSync" class="sync-badge">A carregar…</span>
+    <button id="btnRefresh" class="icon-btn" title="Atualizar dados">⟳</button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="sidebar">
+    <nav class="side-nav">
+      <button class="side-link active" data-view="dashboard">
+        <span class="side-icon">▦</span> Dashboard
+      </button>
+      <button class="side-link" data-view="produtos">
+        <span class="side-icon">▤</span> Produtos
+      </button>
+      <button class="side-link" data-view="movimentos">
+        <span class="side-icon">⇄</span> Entradas / Saídas
+      </button>
+    </nav>
+
+    <div class="side-footer">
+      <p>Ligado a</p>
+      <strong>Google Sheets</strong>
+    </div>
+  </aside>
+
+  <!-- ===================== MAIN CONTENT ===================== -->
+  <main class="main">
+
+    <!-- ---------- DASHBOARD VIEW ---------- -->
+    <section id="view-dashboard" class="view active">
+      <div class="view-header">
+        <div>
+          <h1>Dashboard</h1>
+          <p class="subtitle">Visão geral do estoque em tempo real</p>
+        </div>
+        <button class="btn btn-primary" data-open-modal="produto">+ Novo Produto</button>
+      </div>
+
+      <!-- Cards de resumo -->
+      <div class="cards-grid">
+        <div class="card">
+          <div class="card-icon icon-neutral">▤</div>
+          <div class="card-body">
+            <span class="card-label">Total de Produtos</span>
+            <span class="card-value" id="statTotal">0</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-icon icon-good">✓</div>
+          <div class="card-body">
+            <span class="card-label">Estoque Normal</span>
+            <span class="card-value" id="statNormal">0</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-icon icon-warn">!</div>
+          <div class="card-body">
+            <span class="card-label">Nível Crítico</span>
+            <span class="card-value" id="statCritico">0</span>
+          </div>
+        </div>
+        <div class="card card-alert">
+          <div class="card-icon icon-danger">⚠</div>
+          <div class="card-body">
+            <span class="card-label">Comprar Já!</span>
+            <span class="card-value" id="statComprar">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lista de compras rápida -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Lista de Compras Sugerida</h2>
+          <span class="panel-hint">Produtos em nível crítico ou esgotados</span>
+        </div>
+        <div id="shoppingList" class="shopping-list">
+          <p class="empty-state">Sem alertas de compra no momento 🎉</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- PRODUTOS VIEW ---------- -->
+    <section id="view-produtos" class="view">
+      <div class="view-header">
+        <div>
+          <h1>Produtos</h1>
+          <p class="subtitle">Gestão completa do inventário</p>
+        </div>
+        <button class="btn btn-primary" data-open-modal="produto">+ Novo Produto</button>
+      </div>
+
+      <!-- Filtros -->
+      <div class="filters">
+        <input type="text" id="searchInput" class="input" placeholder="Pesquisar por nome…">
+
+        <select id="filterLocal" class="input select">
+          <option value="">Todos os locais</option>
+          <option value="Armário">Armário</option>
+          <option value="Frigorífico">Frigorífico</option>
+          <option value="Arca">Arca</option>
+        </select>
+
+        <select id="filterCategoria" class="input select">
+          <option value="">Todas as categorias</option>
+          <option value="Laticínios">Laticínios</option>
+          <option value="Carnes">Carnes</option>
+          <option value="Secos">Secos</option>
+          <option value="Limpeza">Limpeza</option>
+        </select>
+
+        <select id="filterStatus" class="input select">
+          <option value="">Todos os status</option>
+          <option value="Estoque Normal">Estoque Normal</option>
+          <option value="Nível Crítico">Nível Crítico</option>
+          <option value="Comprar Já!">Comprar Já!</option>
+        </select>
+      </div>
+
+      <!-- Tabela -->
+      <div class="panel table-panel">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Categoria</th>
+                <th>Local</th>
+                <th>Qtd. Atual</th>
+                <th>Qtd. Mínima</th>
+                <th>Status</th>
+                <th class="th-actions">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="productsTableBody">
+              <!-- preenchido via JS -->
+            </tbody>
+          </table>
+        </div>
+        <p id="tableEmptyState" class="empty-state" style="display:none;">Nenhum produto encontrado.</p>
+      </div>
+    </section>
+
+    <!-- ---------- MOVIMENTOS VIEW ---------- -->
+    <section id="view-movimentos" class="view">
+      <div class="view-header">
+        <div>
+          <h1>Entradas / Saídas</h1>
+          <p class="subtitle">Registe consumo ou reposição de um produto existente</p>
+        </div>
+      </div>
+
+      <div class="panel form-panel">
+        <form id="movementForm" class="form-grid">
+          <div class="form-field span-2">
+            <label for="movProduto">Produto</label>
+            <select id="movProduto" class="input select" required>
+              <option value="">Selecione um produto…</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label>Tipo de movimento</label>
+            <div class="segmented">
+              <button type="button" class="segmented-btn active" data-mov-type="entrada">↓ Entrada</button>
+              <button type="button" class="segmented-btn" data-mov-type="saida">↑ Saída</button>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="movQtd">Quantidade</label>
+            <input type="number" id="movQtd" class="input" min="1" value="1" required>
+          </div>
+
+          <div class="form-field span-2">
+            <label for="movNota">Nota (opcional)</label>
+            <input type="text" id="movNota" class="input" placeholder="Ex: recebido do fornecedor X">
+          </div>
+
+          <div class="form-actions span-2">
+            <button type="submit" class="btn btn-primary">Registar Movimento</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ===================== MODAL: PRODUTO (Criar/Editar) ===================== -->
+<div id="modalProduto" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalProdutoTitle">Novo Produto</h3>
+      <button class="icon-btn" data-close-modal>✕</button>
+    </div>
+    <form id="productForm" class="form-grid">
+      <input type="hidden" id="prodId">
+
+      <div class="form-field span-2">
+        <label for="prodNome">Nome do Produto</label>
+        <input type="text" id="prodNome" class="input" placeholder="Ex: Leite Meio Gordo 1L" required>
+      </div>
+
+      <div class="form-field">
+        <label for="prodCategoria">Categoria</label>
+        <select id="prodCategoria" class="input select" required>
+          <option value="Laticínios">Laticínios</option>
+          <option value="Carnes">Carnes</option>
+          <option value="Secos">Secos</option>
+          <option value="Limpeza">Limpeza</option>
+        </select>
+      </div>
+
+      <div class="form-field">
+        <label for="prodLocal">Local de Armazenamento</label>
+        <select id="prodLocal" class="input select" required>
+          <option value="Armário">Armário</option>
+          <option value="Frigorífico">Frigorífico</option>
+          <option value="Arca">Arca</option>
+        </select>
+      </div>
+
+      <div class="form-field">
+        <label for="prodQtdAtual">Quantidade Atual</label>
+        <input type="number" id="prodQtdAtual" class="input" min="0" value="0" required>
+      </div>
+
+      <div class="form-field">
+        <label for="prodQtdMinima">Quantidade Mínima Ideal</label>
+        <input type="number" id="prodQtdMinima" class="input" min="0" value="1" required>
+      </div>
+
+      <div class="form-field span-2">
+        <label for="prodUnidade">Unidade de Medida</label>
+        <input type="text" id="prodUnidade" class="input" placeholder="Ex: un, kg, L, pacote" value="un">
+      </div>
+
+      <div class="form-actions span-2">
+        <button type="button" id="btnDeleteProduct" class="btn btn-danger-ghost" style="display:none;">Eliminar</button>
+        <button type="submit" class="btn btn-primary">Guardar Produto</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Toast de notificação -->
+<div id="toast" class="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
