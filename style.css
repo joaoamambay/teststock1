@@ -431,6 +431,8 @@ h1, h2, h3 { margin: 0; letter-spacing: -0.01em; }
   border-radius: var(--radius-lg);
   width: 100%;
   max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
   box-shadow: 0 20px 50px rgba(0,0,0,0.2);
   animation: modalIn 0.18s ease;
 }
@@ -486,6 +488,21 @@ h1, h2, h3 { margin: 0; letter-spacing: -0.01em; }
 
 .import-preview { display: flex; flex-direction: column; gap: 10px; }
 .import-summary { display: flex; gap: 8px; }
+
+/* Limita a altura da pré-visualização e permite scroll interno — assim,
+   mesmo com centenas de linhas importadas, o botão "Importar Produtos"
+   continua sempre visível logo abaixo, sem depender do scroll da página. */
+.import-preview .table-wrap {
+  max-height: 320px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+.import-preview .data-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
 
 .row-invalid { background: var(--color-danger-soft); }
 .row-invalid td { color: var(--color-danger); }
