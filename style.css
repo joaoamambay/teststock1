@@ -53,9 +53,43 @@ html, body {
   color: var(--color-text);
   font-size: 15px;
   -webkit-font-smoothing: antialiased;
+  position: relative;
+  overflow-x: hidden;
 }
 
 h1, h2, h3 { margin: 0; letter-spacing: -0.02em; font-weight: 800; }
+
+/* ==========================================================================
+   FUNDO DECORATIVO — manchas de gradiente suaves e desfocadas, para
+   preencher os espaços em branco do layout (inspirado em referências
+   como a ClickUp). Ficam sempre atrás de tudo (z-index -1) e com
+   opacidade baixa, por isso não afetam a leitura dos cards, painéis
+   e tabelas, que continuam com fundo branco sólido por cima.
+   ========================================================================== */
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.28;
+  z-index: -1;
+  pointer-events: none;
+}
+body::before {
+  width: 520px;
+  height: 520px;
+  background: radial-gradient(circle, var(--color-accent-purple), transparent 70%);
+  top: -140px;
+  right: -140px;
+}
+body::after {
+  width: 460px;
+  height: 460px;
+  background: radial-gradient(circle, var(--color-accent-blue), transparent 70%);
+  bottom: -160px;
+  left: -100px;
+}
 
 /* ==========================================================================
    TOPBAR — efeito de vidro (glassmorphism), como o header da Framer
