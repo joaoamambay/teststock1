@@ -110,7 +110,10 @@
           <h1>Produtos</h1>
           <p class="subtitle">Gestão completa do inventário</p>
         </div>
-        <button class="btn btn-primary" data-open-modal="produto">+ Novo Produto</button>
+        <div class="view-header-actions">
+          <button id="btnOpenImport" class="btn btn-secondary">⇩ Importar CSV</button>
+          <button class="btn btn-primary" data-open-modal="produto">+ Novo Produto</button>
+        </div>
       </div>
 
       <!-- Filtros -->
@@ -264,6 +267,61 @@
         <button type="submit" class="btn btn-primary">Guardar Produto</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- ===================== MODAL: IMPORTAÇÃO EM MASSA ===================== -->
+<div id="modalImport" class="modal-overlay">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3>Importar Produtos em Massa</h3>
+      <button class="icon-btn" data-close-modal>✕</button>
+    </div>
+    <div class="import-body">
+      <p class="import-instructions">
+        Cole os dados abaixo (uma linha por produto, valores separados por vírgula) ou carregue um ficheiro CSV.
+        Ordem das colunas: <code>Nome, Categoria, Local, Qtd Atual, Qtd Minima, Unidade</code>.
+        A primeira linha pode ser um cabeçalho — é detetada e ignorada automaticamente.
+      </p>
+
+      <div class="import-toolbar">
+        <label class="btn btn-secondary file-btn">
+          Carregar ficheiro CSV
+          <input type="file" id="importFile" accept=".csv,.txt" hidden>
+        </label>
+        <button type="button" id="btnDownloadTemplate" class="btn btn-secondary">Descarregar modelo CSV</button>
+      </div>
+
+      <textarea id="importTextarea" class="input textarea" rows="8" placeholder="Leite Meio Gordo 1L, Laticínios, Frigorífico, 4, 6, un
+Peito de Frango, Carnes, Arca, 0, 3, kg
+Arroz Agulha 1kg, Secos, Armário, 12, 4, un"></textarea>
+
+      <div class="form-actions" style="margin-top:0;">
+        <button type="button" id="btnAnalyzeImport" class="btn btn-primary">Analisar</button>
+      </div>
+
+      <div id="importPreview" class="import-preview" style="display:none;">
+        <div class="import-summary">
+          <span id="importValidCount" class="badge badge-normal">0 válido(s)</span>
+          <span id="importInvalidCount" class="badge badge-comprar" style="display:none;">0 com erro</span>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th><th>Nome</th><th>Categoria</th><th>Local</th>
+                <th>Qtd Atual</th><th>Qtd Mínima</th><th>Unidade</th><th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="importPreviewBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" id="btnConfirmImport" class="btn btn-primary" disabled>Importar Produtos</button>
+      </div>
+    </div>
   </div>
 </div>
 
