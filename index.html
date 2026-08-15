@@ -129,10 +129,12 @@
 
         <select id="filterCategoria" class="input select">
           <option value="">Todas as categorias</option>
+          <option value="Carne">Carne</option>
           <option value="Laticínios">Laticínios</option>
-          <option value="Carnes">Carnes</option>
-          <option value="Secos">Secos</option>
+          <option value="Frutas, verduras ou legumes">Frutas, verduras ou legumes</option>
           <option value="Limpeza">Limpeza</option>
+          <option value="Sobremesa">Sobremesa</option>
+          <option value="Objetos">Objetos</option>
         </select>
 
         <select id="filterStatus" class="input select">
@@ -231,11 +233,20 @@
       <div class="form-field">
         <label for="prodCategoria">Categoria</label>
         <select id="prodCategoria" class="input select" required>
+          <option value="Carne">Carne</option>
           <option value="Laticínios">Laticínios</option>
-          <option value="Carnes">Carnes</option>
-          <option value="Secos">Secos</option>
+          <option value="Frutas, verduras ou legumes">Frutas, verduras ou legumes</option>
           <option value="Limpeza">Limpeza</option>
+          <option value="Sobremesa">Sobremesa</option>
+          <option value="Objetos">Objetos</option>
+          <option value="__nova_categoria__">+ Adicionar uma categoria nova...</option>
         </select>
+      </div>
+
+      <!-- Só aparece quando "Adicionar uma categoria nova..." é selecionado -->
+      <div class="form-field span-2" id="prodCategoriaNovaWrap" style="display:none;">
+        <label for="prodCategoriaNova">Nome da nova categoria</label>
+        <input type="text" id="prodCategoriaNova" class="input" placeholder="Ex: Bebidas">
       </div>
 
       <div class="form-field">
@@ -244,7 +255,14 @@
           <option value="Armário">Armário</option>
           <option value="Frigorífico">Frigorífico</option>
           <option value="Arca">Arca</option>
+          <option value="__novo_local__">+ Adicionar um local novo...</option>
         </select>
+      </div>
+
+      <!-- Só aparece quando "Adicionar um local novo..." é selecionado -->
+      <div class="form-field span-2" id="prodLocalNovoWrap" style="display:none;">
+        <label for="prodLocalNovo">Nome do novo local</label>
+        <input type="text" id="prodLocalNovo" class="input" placeholder="Ex: Despensa">
       </div>
 
       <div class="form-field">
@@ -259,7 +277,11 @@
 
       <div class="form-field span-2">
         <label for="prodUnidade">Unidade de Medida</label>
-        <input type="text" id="prodUnidade" class="input" placeholder="Ex: un, kg, L, pacote" value="un">
+        <select id="prodUnidade" class="input select" required>
+          <option value="UN">UN</option>
+          <option value="KG">KG</option>
+          <option value="L">L</option>
+        </select>
       </div>
 
       <div class="form-actions span-2">
